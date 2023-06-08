@@ -78,7 +78,7 @@ img {
     background-position: center top;
 }    
 #home{
-    background-image: url(../images/main-bg.jpg);
+    background-image: url(/main-bg.jpg);
     background-attachment: fixed;
     min-height: 100vh;
 }
@@ -96,7 +96,7 @@ img {
 /*News
 -------------------------*/
 #news,#about,#contact,#password {
-    background-image: url(../images/main-bg.jpg);
+    background-image: url(/main-bg.jpg);
     height: 240px;
     margin-bottom: 40px;
 }
