@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hit and Blow</title>
+    <style>
+        /* CSS styles */
+        body {
+            background-color: #000;
+            font-family: "Arial", sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #00ffcc;
+        }
+
+        .game-container {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+        }
+
+        h1 {
+            font-size: 36px;
+            margin: 0;
+            padding: 10px;
+            color: #00ffcc;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        p {
+            font-size: 18px;
+            color: #00ffcc;
+        }
+
+        .input-container {
+            margin: 20px auto;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        input[type="number"] {
+            width: 40px;
+            height: 40px;
+            font-size: 24px;
+            background-color: #333;
+            color: #00ffcc;
+            border: 2px solid #00ffcc;
+            border-radius: 5px;
+            outline: none;
+            text-align: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #00ffcc;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #007a7a;
+        }
+
+        #result {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+            color: #ff0066;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Hit and Blow</h1>
+        <div id="setupContainer">
+            <p>Set the secret 4-digit number.</p>
+            <div class="input-container">
+                <input type="number" id="secretDigit1" min="0" max="9">
+                <input type="number" id="secretDigit2" min="0" max="9">
+                <input type="number" id="secretDigit3" min="0" max="9">
+                <input type="number" id="secretDigit4" min="0" max="9">
+            </div>
+            <button id="setSecret">Set Secret</button>
+        </div>
+        <div id="gameContainer" class="hidden">
+            <p>Try to guess the 4-digit number.</p>
+            <div class="input-container">
+                <input type="number" id="digit1" min="0" max="9">
+                <input type="number" id="digit2" min="0" max="9">
+                <input type="number" id="digit3" min="0" max="9">
+                <input type="number" id="digit4" min="0" max="9">
+            </div>
+            <button id="submit">Guess</button>
+            <button id="hint">Hint</button>
+            <p id="result"></p>
+            <hr>
+            <div id="progress">
+                <h2>Guess History</h2>
+                <ul id="historyList"></ul>
+            </div>
+            <div id="hints">
+                <h2>Hints</h2>
+                <p id="hintMessage"></p>
+            </div>
+        </div>
+    </div>
+    <script>
+        // JavaScript code
+        const secretNumber = [0, 0, 0, 0]; // Default secret number
+        let attempts = 0;
+        const maxAttempts = 10;
+        let hintsLeft = 3;
+
+        function setSecretNumber() {
+            secretNumber[0] = parseInt(document.getElementById("secretDigit1").value);
+            secretNumber[1] = parseInt(document.getElementById("secretDigit2").value);
+            secretNumber[2] = parseInt(document.getElementById("secretDigit3").value);
+            secretNumber[3] = parseInt(document.getElementById("secretDigit4").value);
+            document.getElementById("result").innerHTML = "New secret number set!";
+            document.getElementById("setupContainer").classList.add("hidden");
+            document.getElementById("gameContainer").classList.remove("hidden");
+        }
+
+        function evaluateGuess(guess) {
+            let hits = 0;
+            let blows = 0;
+            for (let i = 0; i < 4; i++) {
+                if (guess[i] === secretNumber[i]) {
+                    hits++;
+                } else if (secretNumber.includes(guess[i])) {
+                    blows++;
+                }
+            }
+            return [hits, blows];
+        }
+
+        function updateProgress(guess, result) {
+            const guessString = guess.join('');
+            const progressList = document.getElementById("historyList");
+            const listItem = document.createElement("li");
+            listItem.textContent = `Guess: ${guessString} | Hits: ${result[0]} | Blows: ${result[1]}`;
+            progressList.appendChild(listItem);
+        }
+
+        function updateHints() {
+            document.getElementById("hintMessage").textContent = `Hints left: ${hintsLeft}`;
+        }
+
+        function provideHint() {
+            if (hintsLeft > 0) {
+                hintsLeft--;
+                const hint = [];
+                for (let i = 0; i < 4; i++) {
+                    if (i === 0 || i === 3) {
+                        hint.push(secretNumber[i]);
+                    } else {
+                        hint.push("*");
+                    }
+                }
+                updateHints();
+                return hint;
+            } else {
+                return null;
+            }
+        }
+
+        function checkGuess() {
+            if (attempts >= maxAttempts) {
+                document.getElementById("result").innerHTML = "Maximum number of attempts reached. The secret number was: " + secretNumber.join('');
+                document.querySelectorAll("input").forEach(input => input.disabled = true);
+                document.getElementById("submit").disabled = true;
+                document.getElementById("hint").disabled = true;
+                return;
+            }
+
+            const guess = [
+                parseInt(document.getElementById("digit1").value),
+                parseInt(document.getElementById("digit2").value),
+                parseInt(document.getElementById("digit3").value),
+                parseInt(document.getElementById("digit4").value)
+            ];
+
+            if (guess.some(isNaN) || new Set(guess).size !== 4) {
+                document.getElementById("result").innerHTML = "Invalid input. Please enter a valid 4-digit number.";
+                return;
+            }
+
+            attempts++;
+            const result = evaluateGuess(guess);
+            updateProgress(guess, result);
+
+            const message = result[0] === 4 ?
+                "Congratulations! You guessed the secret number " + secretNumber.join('') + " in " + attempts + " attempts." :
+                "Hits: " + result[0] + " | Blows: " + result[1] + " | Attempts: " + attempts;
+            document.getElementById("result").innerHTML = message;
+
+            if (hintsLeft > 0) {
+                const hint = provideHint();
+                if (hint) {
+                    document.getElementById("hintMessage").textContent = `Hints left: ${hintsLeft} | Hint: ${hint.join('')}`;
+                }
+            }
+        }
+
+        document.getElementById("submit").addEventListener("click", checkGuess);
+        document.getElementById("setSecret").addEventListener("click", setSecretNumber);
+        document.getElementById("hint").addEventListener("click", provideHint);
+
+        updateHints(); // Initialize hints counter
+    </script>
+</body>
+</html>
